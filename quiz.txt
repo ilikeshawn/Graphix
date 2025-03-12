@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAIS Act Compliance Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ccaa54;
+            --secondary: #17120b;
+            --background: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, var(--secondary) 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        #intro {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #quiz {
+            display: none;
+            position: relative;
+        }
+
+        .question {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s ease;
+        }
+
+        .question:hover {
+            transform: translateY(-3px);
+        }
+
+        .question-number {
+            font-size: 0.9em;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .options label {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .options label:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(10px);
+        }
+
+        .options input[type="radio"] {
+            margin-right: 10px;
+            accent-color: var(--primary);
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(90deg, var(--primary), #00cc6a);
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 20px auto;
+            color: #1a1a1a;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        #progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+            border-radius: 2px;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        #result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .score-display {
+            font-size: 3em;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+            }
+            
+            .question {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="intro">
+            <h1>FAIS Act Compliance Master Quiz</h1>
+            <p>30 questions testing comprehensive knowledge of FSP licensing requirements</p>
+            <button id="start">Start Quiz</button>
+        </div>
+
+        <div id="quiz">
+            <div id="progress">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="questions-container"></div>
+            <button id="submit">Next Question</button>
+        </div>
+
+        <div id="result">
+            <div class="score-display"></div>
+            <button onclick="location.reload()">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            // Section 8 Questions
+            {
+                question: "Under FAIS Act Sec 8, what is a primary requirement for FSP license approval?",
+                options: ["Financial soundness", "Physical office size", "Number of clients", "Marketing budget"],
+                answer: "Financial soundness"
+            },
+            {
+                question: "What must the registrar verify under Sec 8(2) regarding key individuals?",
+                options: ["Their qualifications", "Honesty and integrity", "Age", "Previous employers"],
+                answer: "Honesty and integrity"
+            },
+            {
+                question: "According to Sec 8(4), what can the registrar impose on a license?",
+                options: ["Conditions", "Taxes", "Employee quotas", "Marketing restrictions"],
+                answer: "Conditions"
+            },
+            {
+                question: "What does Sec 8(10)(a)(i) require regarding new directors?",
+                options: ["15-day notification", "Prior approval", "Public announcement", "Client voting"],
+                answer: "15-day notification"
+            },
+
+            // Section 9 Questions
+            {
+                question: "Under Sec 9(1)(g), grounds for license suspension include:",
+                options: ["Breach of conditions", "Low profits", "Employee turnover", "Office relocation"],
+                answer: "Breach of conditions"
+            },
+            {
+                question: "What must precede license suspension under Sec 9(2)?",
+                options: ["Opportunity to respond", "Media announcement", "Client voting", "Financial audit"],
+                answer: "Opportunity to respond"
+            },
+            {
+                question: "Under Sec 9(3), urgent suspensions require:",
+                options: ["Immediate client protection", "Prior warning", "Board approval", "Media consultation"],
+                answer: "Immediate client protection"
+            },
+            {
+                question: "What follows provisional suspension under Sec 9(4)?",
+                options: ["Final decision within 30 days", "Automatic reinstatement", "Client compensation", "License renewal"],
+                answer: "Final decision within 30 days"
+            },
+
+            // Section 11
+            {
+                question: "Sec 11 requires FSPs to maintain:",
+                options: ["Risk management systems", "Social media accounts", "Client gifts register", "Vehicle fleet"],
+                answer: "Risk management systems"
+            },
+            {
+                question: "What must Sec 11 controls prevent?",
+                options: ["Financial loss through negligence", "Employee promotions", "Client feedback", "Market expansion"],
+                answer: "Financial loss through negligence"
+            },
+
+            // Section 13
+            {
+                question: "Under Sec 13, FSPs must ensure representatives:",
+                options: ["Meet fit & proper requirements", "Work fixed hours", "Use company cars", "Attend monthly meetings"],
+                answer: "Meet fit & proper requirements"
+            },
+            {
+                question: "What register must FSPs maintain under Sec 13(3)?",
+                options: ["Representatives register", "Client assets", "Office supplies", "Marketing campaigns"],
+                answer: "Representatives register"
+            },
+
+            // Section 19
+            {
+                question: "Sec 19 audit requirements mandate:",
+                options: ["Annual financial audits", "Monthly client surveys", "Daily transaction logs", "Weekly staff training"],
+                answer: "Annual financial audits"
+            },
+            {
+                question: "Audit reports must be submitted within:",
+                options: ["4 months", "30 days", "1 week", "6 months"],
+                answer: "4 months"
+            },
+
+            // Section 41(2)
+            {
+                question: "Sec 41(2) penalties for late submissions include:",
+                options: ["Daily R1,000 fine", "License suspension", "Public apology", "Mandatory training"],
+                answer: "Daily R1,000 fine"
+            },
+
+            // BN 123 of 2009
+            {
+                question: "BN 123 requires license display in:",
+                options: ["Prominent durable manner", "Staff toilets", "Client files", "Marketing materials only"],
+                answer: "Prominent durable manner"
+            },
+            {
+                question: "BN 123 mandates updates to representative register within:",
+                options: ["15 days", "48 hours", "30 days", "7 days"],
+                answer: "15 days"
+            },
+            {
+                question: "Category II FSPs must maintain professional indemnity cover of:",
+                options: ["R5 million", "R1 million", "R500,000", "No requirement"],
+                answer: "R5 million"
+            },
+
+            // General Compliance
+            {
+                question: "The FAIS Ombud deals with:",
+                options: ["Client disputes", "Employee benefits", "Tax matters", "Office leases"],
+                answer: "Client disputes"
+            },
+            {
+                question: "FICA requirements include:",
+                options: ["Client identification", "Product development", "Market research", "Staff uniforms"],
+                answer: "Client identification"
+            },
+            {
+                question: "A compliance officer must be:",
+                options: ["Registrar-approved", "Company CEO", "Marketing manager", "IT specialist"],
+                answer: "Registrar-approved"
+            },
+            {
+                question: "CPD requirements apply to:",
+                options: ["Representatives & KIs", "Cleaning staff", "IT support", "Receptionists"],
+                answer: "Representatives & KIs"
+            },
+            {
+                question: "Debarment records must be kept for:",
+                options: ["5 years", "1 year", "10 years", "3 months"],
+                answer: "5 years"
+            },
+            {
+                question: "Conflict of interest policies must address:",
+                options: ["Financial incentives", "Office decor", "Staff vacations", "Client birthdays"],
+                answer: "Financial incentives"
+            },
+            {
+                question: "Record keeping requirements include:",
+                options: ["5-year retention", "Monthly destruction", "Client editing access", "Digital-only storage"],
+                answer: "5-year retention"
+            },
+            {
+                question: "FSR Act established:",
+                options: ["Prudential Authority", "Tax Authority", "Labor Board", "Health Council"],
+                answer: "Prudential Authority"
+            },
+            {
+                question: "Market conduct regulation is managed by:",
+                options: ["FSCA", "SARS", "CIPC", "JSE"],
+                answer: "FSCA"
+            },
+            {
+                question: "Financial Sector Code applies to:",
+                options: ["B-BBEE compliance", "Building codes", "IT security", "Product design"],
+                answer: "B-BBEE compliance"
+            },
+            {
+                question: "Treating Customers Fairly (TCF) focuses on:",
+                options: ["Client outcomes", "Profit maximization", "Staff bonuses", "Office locations"],
+                answer: "Client outcomes"
+            },
+            {
+                question: "A Key Individual's responsibilities include:",
+                options: ["Oversight of financial services", "Cleaning schedules", "IT maintenance", "Marketing budgets"],
+                answer: "Oversight of financial services"
+            },
+            {
+                question: "FAIS Act's primary purpose is:",
+                options: ["Consumer protection", "Tax collection", "Employee benefits", "Market domination"],
+                answer: "Consumer protection"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        document.getElementById('start').addEventListener('click', () => {
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            loadQuestion();
+            updateProgress();
+        });
+
+        function loadQuestion() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = `
+                <div class="question">
+                    <div class="question-number">Question ${currentQuestion + 1} of 30</div>
+                    <p>${questions[currentQuestion].question}</p>
+                    <div class="options">
+                        ${questions[currentQuestion].options.map(option => `
+                            <label>
+                                <input type="radio" name="question" value="${option}">
+                                ${option}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateProgress() {
+            const progress = (currentQuestion + 1) / 30 * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        document.getElementById('submit').addEventListener('click', () => {
+            const selected = document.querySelector('input[name="question"]:checked');
+            if (selected && selected.value === questions[currentQuestion].answer) score++;
+
+            if (currentQuestion < 29) {
+                currentQuestion++;
+                loadQuestion();
+                updateProgress();
+                if(currentQuestion === 29) document.getElementById('submit').textContent = 'Submit Final Answers';
+            } else {
+                showResults();
+            }
+        });
+
+        function showResults() {
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            document.querySelector('.score-display').innerHTML = `
+                Score: ${score}/30<br>
+                (${Math.round((score/30)*100)}%)<br>
+                ${score >= 27 ? '🌟 Excellent Compliance Knowledge!' : 
+                 score >= 21 ? '✅ Good Understanding' : 
+                 '⚠️ Requires Immediate Training'}
+            `;
+        }
+    </script>
+</body>
+</html>
