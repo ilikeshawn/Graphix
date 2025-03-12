@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Exam 2 - Interactive Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --secondary: #2c3e50;
+            --background: #f5f6fa;
+            --text: #2c3e50;
+            --success: #2ecc71;
+            --warning: #e74c3c;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        #intro {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        #quiz {
+            display: none;
+        }
+
+        .question {
+            background: #fff;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .question:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+        }
+
+        .question-number {
+            font-size: 0.9em;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options label {
+            display: block;
+            padding: 12px 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .options label:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .options input[type="radio"] {
+            margin-right: 10px;
+            accent-color: var(--primary);
+        }
+
+        button {
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 20px auto;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        #progress {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            margin: 20px 0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0;
+            background: var(--primary);
+            transition: width 0.5s ease;
+        }
+
+        #result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .score-display {
+            font-size: 2.5em;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+
+        .feedback {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .feedback.success {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .feedback.warning {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--warning);
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .question {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .timer {
+                position: static;
+                margin: 10px auto;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">Time: 60:00</div>
+    <div class="container">
+        <div id="intro">
+            <h1>Mock Exam 2</h1>
+            <p>Welcome to the interactive version of Mock Exam 2. This exam consists of multiple-choice questions to test your knowledge.</p>
+            <ul style="text-align: left; margin: 20px auto; max-width: 400px;">
+                <li>Time limit: 60 minutes</li>
+                <li>Pass mark: 70%</li>
+                <li>No backward navigation</li>
+                <li>Results shown immediately</li>
+            </ul>
+            <button id="start">Start Exam</button>
+        </div>
+
+        <div id="quiz">
+            <div id="progress">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="questions-container"></div>
+            <button id="submit">Next Question</button>
+        </div>
+
+        <div id="result">
+            <div class="score-display"></div>
+            <div id="feedback" class="feedback"></div>
+            <button onclick="window.location.reload()">Retry Exam</button>
+            <button onclick="reviewAnswers()">Review Answers</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample questions - You'll need to replace these with your actual exam questions
+        const questions = [
+    {
+        question: "Which ONE of the following constitutes intermediary services as defined in the FAIS Act?",
+        options: [
+            "Ralph works at product supplier A and processes clients' claims.",
+            "FSP Z keep clients funds in safe custody.",
+            "James informs a client about the advantages a funeral policy will hold for her.",
+            "Premiums are paid into product supplier D's account at Bank GFF."
+        ],
+        answer: "James informs a client about the advantages a funeral policy will hold for her.",
+        explanation: "Intermediary services include providing information about financial products to clients."
+    },
+    {
+        question: "On which date did the Financial Sector Conduct Authority become operational?",
+        options: [
+            "1 September 2004",
+            "20 April 1994",
+            "1 April 1991",
+            "18 April 2018"
+        ],
+        answer: "18 April 2018",
+        explanation: "The Financial Sector Conduct Authority (FSCA) became operational on 18 April 2018."
+    },
+    {
+        question: "Which of the following fit and proper requirements are applicable to financial services providers?\n(i) Competence\n(ii) Financial Soundness\n(iii) Operational Ability\n(iv) Continuous Professional Development\n(v) Honesty, Integrity & Good standing",
+        options: [
+            "ii, iii & v only",
+            "iii & v only",
+            "i & iii only",
+            "ii; iii & iv only"
+        ],
+        answer: "ii, iii & v only",
+        explanation: "Financial services providers must meet requirements for financial soundness, operational ability, and honesty, integrity & good standing."
+    }
+];      {
+        question: "How many product categories are there in Category I?",
+        options: [
+            "10",
+            "16",
+            "20",
+            "26"
+        ],
+        answer: "26",
+        explanation: "Category I contains 26 different product categories."
+    },
+    {
+        question: "Which ONE of the following statements is correct regarding the role players in the financial services industry?",
+        options: [
+            "The compliance officer is responsible for oversight and management of financial services.",
+            "A financial services provider must apply for a license with the Department of Finance.",
+            "The Ombud for financial services providers is responsible for regulation of financial services.",
+            "Juristic representatives are appointed and approved by the financial services provider."
+        ],
+        answer: "Juristic representatives are appointed and approved by the financial services provider.",
+        explanation: "FSPs have the authority to appoint and approve juristic representatives."
+    },
+    {
+        question: "Themba invested 1.3 million in a new venture on advice of a representative of FSP 7 and suffered a loss of R1.1 million. After a negative response from FSP 7 Advisors, he was advised to refer the matter to the FAIS Ombud. What amount must Lucas forego for his complaint to be considered by the FAIS Ombud?",
+        options: [
+            "R200 000",
+            "R300 000",
+            "R400 000",
+            "R500 000"
+        ],
+        answer: "R300 000",
+        explanation: "The FAIS Ombud has a monetary jurisdiction limit, and amounts above this must be foregone to have the complaint considered."
+    },
+    {
+        question: "Which of the following are a purpose of the register of representatives?\n(i) Providing a record of representatives associated with the financial services provider.\n(ii) Calculation of levies payable to the Financial Sector Conduct Authority.\n(iii) Maintenance of a central register of representatives.\n(iv) Assisting to make a look-up facility available on the FSCA official website.",
+        options: [
+            "i & iv only",
+            "iii & iv only",
+            "i; ii & iii only",
+            "i, ii; iii & iv"
+        ],
+        answer: "i, ii; iii & iv",
+        explanation: "All listed purposes are valid for the register of representatives."
+    },
+    {
+        question: "Marian invested money on the advice of a representative of L Brokers. She suffered a loss of R950 000 and submitted a complaint through the FAIS Ombud. L Brokers did not agree that the FAIS Ombud limit for complaints may be exceeded in this specific complaint. What is the maximum financial compensation that the FAIS Ombud can award Mandy with regard to the loss suffered?",
+        options: [
+            "R800 000 plus interest for the period from the date of complaint until date of determination.",
+            "R950 000 plus interest for the period from the date of complaint until date of determination.",
+            "R800 000 plus interest for the period from the date of loss until date of determination.",
+            "R950 000 plus interest for the period from the date of loss until date of determination."
+        ],
+        answer: "R800 000 plus interest for the period from the date of complaint until date of determination.",
+        explanation: "The FAIS Ombud has a maximum compensation limit of R800,000 plus interest from the date of complaint."
+    },
+    {
+        question: "Which ONE of the following is a minimum qualification requirement for a representative registered for friendly society benefits only?",
+        options: [
+            "Class of business training only.",
+            "Product specific training only.",
+            "Regulatory examination for representatives and product specific training.",
+            "Class of business training and product specific training."
+        ],
+        answer: "Class of business training and product specific training.",
+        explanation: "Representatives dealing with friendly society benefits must complete both class of business training and product specific training."
+    },
+    {
+        question: "Representatives may only work under supervision if the –",
+        options: [
+            "Financial services provider has appointed a key individual that is only responsible to monitor services provided under supervision.",
+            "Supervisor has been approved in writing by the Commissioner for supervising such services.",
+            "Supervised representative has entered into a detailed supervision agreement with the financial services provider.",
+            "Supervision period does not exceed 3 years, or a longer period agreed to by the Commissioner."
+        ],
+        answer: "Supervised representative has entered into a detailed supervision agreement with the financial services provider.",
+        explanation: "A formal supervision agreement between the representative and FSP is required for supervision arrangements."
+    }
+];      {
+        question: "Looking at the representative details provided, which representative is deemed to have maintained the fit and proper status in terms of qualification and CPD requirements as at the end of the CPD cycle on 31 May 2019?\n\nRepresentative Details:\ni) First Appointment: 1 June 2007, Qualifications: Skills program (60 credits, 2008) + RE5, CPD: None (exempted)\nii) First Appointment: 1 December 2018, Qualifications: CFP + RE5, CPD: 9 hours FPI\niii) First Appointment: 1 March 2017, Qualifications: CFP + RE1, CPD: 18 hours FPI\niv) First Appointment: 1 April 2015, Qualifications: B.Com Finance + RE1 + RE5, CPD: 12 hours FPI",
+        options: [
+            "i",
+            "ii",
+            "iii",
+            "iv"
+        ],
+        answer: "ii",
+        explanation: "Representative ii meets all requirements and has completed the necessary CPD hours within the required timeframe."
+    },
+    {
+        question: "Which conditions must be met before a debarred representative can apply for removal from the list of debarred representatives?\n(i) The FAIS Ombud must have determined that the representative was not guilty of an offence.\n(ii) Six months must have lapsed since the debarment was initiated.\n(iii) All unconcluded business must have been properly concluded.\n(iv) The debarred representative must meet all fit and proper requirements.",
+        options: [
+            "i & iv only",
+            "iii & iv only",
+            "i; ii & iii only",
+            "ii; iii & iv only"
+        ],
+        answer: "ii; iii & iv only",
+        explanation: "For removal from debarment, time must have passed, business must be concluded, and fit and proper requirements must be met."
+    },
+    {
+        question: "Jane has been appointed as a representative working under supervision at M&M Financial Services. What must M&M Financial Services consider when determining supervision arrangements?\n(i) Jane's assessed level of competency.\n(ii) Complexity of the products offered.\n(iii) The supervisor's level of expertise and knowledge.\n(iv) The risk inherent to M&M Financial Services.",
+        options: [
+            "ii & iv only",
+            "iii & iv only",
+            "i, ii & iv only",
+            "i, ii, iii & iv"
+        ],
+        answer: "i, ii, iii & iv",
+        explanation: "All factors must be considered when determining supervision arrangements to ensure effective oversight."
+    },
+    {
+        question: "A financial services provider is licensed to sell short and long-term deposits, long term insurance Cat B1, and short-term insurance personal lines. Sandy will complete her B.Com in Economics in 1 year's time and is joining as a representative with no previous industry experience. Which actions must take place for Sandy's appointment?\n(i) Complete product specific training before appointment.\n(ii) Only sell short-term insurance personal lines initially.\n(iii) Complete supervision agreement and be placed on register under all categories.\n(iv) Undergo a lie detector test for honesty and integrity requirements.",
+        options: [
+            "i & iii only",
+            "iii & iv only",
+            "i, ii & iv only",
+            "i, ii and iii only"
+        ],
+        answer: "i & iii only",
+        explanation: "Product specific training and a supervision agreement are required, but a lie detector test is not necessary."
+    },
+    {
+        question: "A client complains about an investment product you sold him two years ago that has not delivered the expected return, and he threatens to lodge a complaint directly with the FAIS Ombud against your FSP. What is the most appropriate action for you to take?",
+        options: [
+            "Pre-empt the complaint by writing an email to the Ombud explaining the circumstances.",
+            "Wait until you hear from your key individual if the client complains.",
+            "Inform the client of the internal complaints process and how to lodge a complaint with the FSP.",
+            "Advise your key individual of the incident and provide a copy of your record of advice."
+        ],
+        answer: "Inform the client of the internal complaints process and how to lodge a complaint with the FSP.",
+        explanation: "Clients must first follow the FSP's internal complaints process before approaching the Ombud."
+    }
+];       {
+        question: "The supervisor became aware that an action by one of its supervised representatives resulted in unfair treatment of a client. According to the exemption provisions for services rendered under supervision, what action is the supervisor required to take?",
+        options: [
+            "Inform the client of the unfair treatment as soon as possible.",
+            "Inform the client of the unfair treatment within 1 day.",
+            "Report the incident to the FSP within a reasonable time.",
+            "Report the incident to the FSP immediately."
+        ],
+        answer: "Report the incident to the FSP immediately.",
+        explanation: "Supervisors must immediately report any unfair treatment of clients to the FSP to ensure prompt corrective action."
+    },
+    {
+        question: "Which ONE of the following statements regarding supervision arrangements is incorrect?",
+        options: [
+
+            "The supervised representative must disclose to clients that he/she is rendering services under supervision.",
+            "The FSP must differentiate on the representative register between those working under supervision and those that are not.",
+            "Representatives who provide financial services in multiple subcategories can gain the experience at the same time.",
+            "The minimum period a supervisee can be placed under supervision is 6 years from the date of first appointment."
+        ],
+        answer: "The minimum period a supervisee can be placed under supervision is 6 years from the date of first appointment.",
+        explanation: "This statement is incorrect as there is no minimum 6-year supervision requirement."
+    },
+    {
+        question: "Which of the following documentation is a financial services provider not required to keep in terms of the FAIS Act?",
+        options: [
+            "Known premature cancellation of transactions by clients.",
+            "The identity and proof of address of client.",
+            "Voice logged records of advice rendered.",
+            "Cases of non-compliance with the FAIS Act by the FSP."
+        ],
+        answer: "Voice logged records of advice rendered.",
+        explanation: "Voice logged records are not specifically required by the FAIS Act, though written records of advice are mandatory."
+    },
+    {
+        question: "Big Boy Advisors, FSP license number 9119, did not adhere to a directive issued in terms of the FAIS Act. Which action is the Financial Sector Conduct Authority likely to take?",
+        options: [
+            "Fine Big Boy R100 million.",
+            "Suspend license 9119.",
+            "Withdraw license 9119.",
+            "Debar license 9119."
+        ],
+        answer: "Suspend license 9119.",
+        explanation: "Non-adherence to a directive typically results in license suspension as an immediate regulatory response."
+    },
+    {
+        question: "Which ONE of the following statements regarding the lapsing of an FSP license is correct?",
+        options: [
+            "The Commissioner must publish notification of the lapsing on the FSCA website or other media.",
+            "The Commissioner may publish notification of the lapsing on the FSCA website or other media.",
+            "The Commissioner must publish notification of the lapsing in the Government Gazette or other media.",
+            "The Commissioner may publish notification of the lapsing in the Government Gazette or other media."
+        ],
+        answer: "The Commissioner must publish notification of the lapsing in the Government Gazette or other media.",
+        explanation: "The FAIS Act requires mandatory publication of license lapsing in the Government Gazette or other media."
+    }
+];      {
+        question: "In which of the following instances must the commissioner report the incident on the official website of FSCA? Choose the incorrect option.",
+        options: [
+            "Lifting of a suspended FSP license.",
+            "Withdrawal of an FSP license.",
+            "Lapsing of an FSP license.",
+            "Suspension of an FSP license."
+        ],
+        answer: "Lapsing of an FSP license.",
+        explanation: "Lapsing of an FSP license must be published in the Government Gazette, not on the FSCA website."
+    },
+    {
+        question: "The owner of Platteland Brokers, a sole proprietor FSP, died. His daughter inherits the business. Which procedures need to be followed to adhere to the FAIS Act?",
+        options: [
+            "i & iii only",
+            "i & iv only",
+            "ii & iii only",
+            "ii & iv only"
+        ],
+        answer: "ii & iii only",
+        explanation: "When a sole proprietor FSP dies, specific procedures must be followed including applying for a new license and ensuring continuity of service."
+    },
+    {
+        question: "Complete the sentence. Representatives is ________ by the Financial Sector Conduct Authority.",
+        options: [
+            "Authorised",
+            "Appointed",
+            "Approved",
+            "Registered"
+        ],
+        answer: "Appointed",
+        explanation: "Representatives are appointed by FSPs, not directly authorized, approved, or registered by the FSCA."
+    },
+    {
+        question: "The license of Buddy Advisors has been suspended. Choose the INCORRECT reason why this might have happened.",
+        options: [
+            "Not appointing a key individual.",
+            "Failing to pay a client's claim.",
+            "Not adhering to a directive issued.",
+            "No longer meeting financial soundness requirements."
+        ],
+        answer: "Failing to pay a client's claim.",
+        explanation: "Failing to pay a client's claim alone is not a direct grounds for license suspension under the FAIS Act."
+    },
+    {
+        question: "The FAIS commissioner declared certain fees undesirable. Which grounds justify this decision?",
+        options: [
+            "i & ii only",
+            "iii & iv only",
+            "i, ii & iv only",
+            "i, ii, iii & iv"
+        ],
+        answer: "i, ii, iii & iv",
+        explanation: "All listed grounds can justify declaring fees undesirable if they don't align with FAIS Act requirements."
+    }
+];      {
+        question: "Which actions in a business rescue process require the Commissioner's approval?",
+        options: [
+            "ii & iv only",
+            "iii & iv only",
+            "i, iii & iv only",
+            "i, ii, iii & iv"
+        ],
+        answer: "i, ii, iii & iv",
+        explanation: "All business rescue actions affecting the FSP's license require Commissioner approval to ensure regulatory compliance."
+    },
+    {
+        question: "Which FSP adheres to FAIS Act requirements for displaying licenses?",
+        options: [
+            "FSP A keeps the original in a safe and produces it on request.",
+            "FSP B displays a certified copy at every premises.",
+            "FSP C displays the original at the head office.",
+            "FSP D gives a certified copy to every client post-transaction."
+        ],
+        answer: "FSP B displays a certified copy at every premises.",
+        explanation: "The FAIS Act requires FSPs to display certified copies of their license at every business premises."
+    },
+    {
+        question: "Which events can lead to a R10m fine and/or 10 years imprisonment?",
+        options: [
+            "i & iv only",
+            "iii & iv only",
+            "i, ii & iii only",
+            "ii, iii & iv only"
+        ],
+        answer: "ii, iii & iv only",
+        explanation: "Serious violations of the FAIS Act can result in significant penalties including fines and imprisonment."
+    },
+    {
+        question: "The General Code of Conduct prescribes keeping transaction records for:",
+        options: [
+            "Five years after the transaction date.",
+            "Five years after product termination.",
+            "Seven years after the transaction date.",
+            "Seven years after product termination."
+        ],
+        answer: "Five years after product termination.",
+        explanation: "Records must be maintained for five years after the financial product has been terminated."
+    },
+    {
+        question: "Choose the FALSE option. Which is a general duty under the General Code of Conduct?",
+        options: [
+            "Render services honestly.",
+            "Render services in the best interest of the FSP.",
+            "Act with due skill, care, and diligence.",
+            "Render services in the interest of industry integrity."
+        ],
+        answer: "Render services in the best interest of the FSP.",
+        explanation: "Services should be rendered in the best interest of the client, not the FSP."
+    }
+];      {
+        question: "Thandeka provides intermediary services for all long/short-term products. What CPD requirements apply?",
+        options: [
+            "6 notional hours under supervision.",
+            "Exempt from CPD.",
+            "12 hours post-qualification.",
+            "18 hours post-competency."
+        ],
+        answer: "18 hours post-competency.",
+        explanation: "Representatives providing services across multiple product categories must complete 18 hours of CPD post-competency."
+    },
+    {
+        question: "A client suffers loss due to insurer negligence. The insurer blames the bank. Which institution handles this?",
+        options: [
+            "FAIS Ombud.",
+            "Ombud for short-term insurance.",
+            "South African Reserve Bank.",
+            "FSCA."
+        ],
+        answer: "FAIS Ombud.",
+        explanation: "The FAIS Ombud handles complaints involving financial services providers and their representatives."
+    },
+    {
+        question: "Which actions comply with conflict of interest stipulations?",
+        options: [
+            "ii & iii only",
+            "i & ii only",
+            "i, ii & iii only",
+            "ii, iii & iv only"
+        ],
+        answer: "ii, iii & iv only",
+        explanation: "Actions must comply with conflict of interest regulations to ensure fair treatment of clients."
+    },
+    {
+        question: "Choose the CORRECT statement. FSP A sells long-term insurance products exclusively for one supplier.",
+        options: [
+            "FSP A must disclose the supplier restriction.",
+            "The agreement creates a conflict of interest.",
+            "The supplier must disclose in policy documents.",
+            "Report as a material financial interest."
+        ],
+        answer: "FSP A must disclose the supplier restriction.",
+        explanation: "FSPs must disclose any restrictions on their product range to ensure transparency with clients."
+    },
+    {
+        question: "Choose the INCORRECT option. Frank is a key individual. Which is NOT his responsibility?",
+        options: [
+            "Review recruitment processes.",
+            "Debar representatives for misconduct.",
+            "Gain experience across product categories.",
+            "Verify compliance frameworks."
+        ],
+        answer: "Debar representatives for misconduct.",
+        explanation: "Debarment of representatives is a function of the FSCA, not individual key individuals."
+    }
+];      {
+        question: "Which statements about conflict of interest policies are correct?",
+        options: [
+            "i & ii only",
+            "ii & iii only",
+            "i, ii & iii only",
+            "ii, iii & iv only"
+        ],
+        answer: "i, ii & iii only",
+        explanation: "Conflict of interest policies must be comprehensive and address all key aspects of potential conflicts."
+    },
+    {
+        question: "Choose the incorrect answer. Under FAIS, a client is defined as:",
+        options: [
+            "A specific person/group receiving intentional service.",
+            "A member of the general public.",
+            "Successor in title to a client.",
+            "Beneficiary of a financial product."
+        ],
+        answer: "A member of the general public.",
+        explanation: "Under FAIS, a client must be receiving specific financial services; general public members are not automatically clients."
+    },
+    {
+        question: "Which products are regulated under Category II?",
+        options: [
+            "Short-term bank deposits",
+            "Funeral Policies",
+            "Business Insurance",
+            "Hospital Plan Benefits"
+        ],
+        answer: "Short-term bank deposits",
+        explanation: "Category II includes discretionary financial services, including short-term bank deposits."
+    },
+    {
+        question: "Which of the following information must be disclosed to a client regarding the product supplier as stipulated in the General Code of Conduct?",
+        options: [
+            "i & ii only",
+            "i & iii only",
+            "iii & iv only",
+            "i, iii & iv only"
+        ],
+        answer: "i, iii & iv only",
+        explanation: "The General Code of Conduct requires specific disclosures about product suppliers to ensure transparency."
+    },
+    {
+        question: "In which of the following incidents will the FSP license of a financial services provider lapse?",
+        options: [
+            "The owner of FSP A, a sole proprietor, becomes temporarily incapable of carrying on with the business.",
+            "FSP B is a close corporation and is provisionally sequestrated.",
+            "The business operations of FSP C, a private company, is dormant.",
+            "FSP D, a partnership, does not have an approved key individual."
+        ],
+        answer: "FSP B is a close corporation and is provisionally sequestrated.",
+        explanation: "Provisional sequestration of a close corporation results in automatic lapsing of the FSP license."
+    }
+];      {
+        question: "Which of the following additional disclosures should be made regarding a financial product marketed as an investment as stipulated in the General Code of Conduct?",
+        options: [
+            "i & ii only",
+            "i & iii only",
+            "iii & iv only",
+            "i, iii & iv only"
+        ],
+        answer: "i, iii & iv only",
+        explanation: "Investment products require specific disclosures about risks, returns, and other relevant factors."
+    },
+    {
+        question: "Which ONE of the following is a definition of immaterial financial interest?",
+        options: [
+            "Any financial interest paid by different third-party providers, the aggregate of which does not exceed a thousand Rand in any calendar year.",
+            "Any financial interest paid by the same third-party provider, the aggregate of which does not exceed a thousand Rand in any calendar year.",
+            "Any financial interest paid by different third-party providers, the aggregate of which does not exceed a thousand Rand in any financial year.",
+            "Any financial interest paid by the same third-party provider, the aggregate of which does not exceed a thousand Rand in any financial year."
+        ],
+        answer: "Any financial interest paid by the same third-party provider, the aggregate of which does not exceed a thousand Rand in any calendar year.",
+        explanation: "Immaterial financial interest is defined by the source (same provider) and amount limit (R1000) per calendar year."
+    },
+    {
+        question: "Giant Insurance opens a new call centre and employs 200 new Representatives. Only 30% have prior experience. When the register of representatives is sent to the FSCA, which of the following is incorrect?",
+        options: [
+            "Whether the representative acts as an employee or mandated representative.",
+            "The licence conditions applicable to each representative.",
+            "The names, IDs, and home addresses of all 200 representatives.",
+            "The supervision commencement dates for 140 of the representatives."
+        ],
+        answer: "The licence conditions applicable to each representative.",
+        explanation: "License conditions are not part of the required information for the register of representatives."
+    },
+    {
+        question: "When a representative compares products from different suppliers, which actions may they do?",
+        options: [
+            "i & ii only",
+            "i & iii only",
+            "ii & iv only",
+            "i, iii & iv only"
+        ],
+        answer: "i & iii only",
+        explanation: "Representatives must follow specific guidelines when comparing products from different suppliers."
+    },
+    {
+        question: "A direct marketer must furnish a client with which particulars when rendering a financial service?",
+        options: [
+            "The telephone number of the compliance department.",
+            "The registration number of the direct marketer.",
+            "The business address of the direct marketer.",
+            "The contact details of the complaints department."
+        ],
+        answer: "The business address of the direct marketer.",
+        explanation: "Direct marketers must provide their business address to ensure transparency and accessibility."
+    }
+];
+            // Add more questions here from your Mock exam 2
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timeLeft = 3600; // 60 minutes in seconds
+        let timer;
+        let userAnswers = [];
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft === 0) {
+                clearInterval(timer);
+                showResults();
+            } else {
+                timeLeft--;
+            }
+        }
+
+        document.getElementById('start').addEventListener('click', () => {
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            loadQuestion();
+            updateProgress();
+            timer = setInterval(updateTimer, 1000);
+        });
+
+        function loadQuestion() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = `
+                <div class="question">
+                    <div class="question-number">Question ${currentQuestion + 1} of ${questions.length}</div>
+                    <p>${questions[currentQuestion].question}</p>
+                    <div class="options">
+                        ${questions[currentQuestion].options.map((option, index) => `
+                            <label>
+                                <input type="radio" name="question" value="${option}">
+                                ${option}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        document.getElementById('submit').addEventListener('click', () => {
+            const selected = document.querySelector('input[name="question"]:checked');
+            
+            if (!selected) {
+                alert('Please select an answer before proceeding.');
+                return;
+            }
+
+            userAnswers.push(selected.value);
+            
+            if (selected.value === questions[currentQuestion].answer) {
+                score++;
+            }
+
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+                updateProgress();
+                if(currentQuestion === questions.length - 1) {
+                    document.getElementById('submit').textContent = 'Submit Exam';
+                }
+            } else {
+                showResults();
+            }
+        });
+
+        function showResults() {
+            clearInterval(timer);
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            
+            const percentage = Math.round((score/questions.length)*100);
+            const passed = percentage >= 70;
+            
+            document.querySelector('.score-display').innerHTML = `
+                Final Score: ${score}/${questions.length}<br>
+                (${percentage}%)
+            `;
+
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = passed ? 
+                '🎉 Congratulations! You have passed the exam.' :
+                '📚 You did not meet the passing score. Please review the material and try again.';
+            feedback.className = `feedback ${passed ? 'success' : 'warning'}`;
+        }
+
+        function reviewAnswers() {
+            let reviewHTML = '<div style="padding: 20px;">';
+            questions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const correct = userAnswer === q.answer;
+                
+                reviewHTML += `
+                    <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
+                        <p style="color: ${correct ? 'green' : 'red'}">
+                            Your answer: ${userAnswer}<br>
+                            Correct answer: ${q.answer}
+                        </p>
+                        ${q.explanation ? `<p><small>Explanation: ${q.explanation}</small></p>` : ''}
+                    </div>
+                `;
+            });
+            reviewHTML += '</div>';
+            
+            document.getElementById('result').innerHTML = reviewHTML + 
+                '<button onclick="window.location.reload()">Try Again</button>';
+        }
+    </script>
+</body>
+</html>
